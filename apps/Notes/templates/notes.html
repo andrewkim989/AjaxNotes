@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $(".editbutton").click(function () {
+                $(this).parent().parent().parent().children(".editform").toggle();
+                $(this).parent().parent().parent().children(".desc").toggle();
+            });
+
+            $(".cancel").click(function () {
+                $(this).parent().parent().parent().children(".editform").toggle();
+                $(this).parent().parent().parent().children(".desc").toggle();
+            });
+
+            $(".editconfirm").submit(function(e) {
+                e.preventDefault();
+                $(this).parent().children(".editerror").html("");
+                $.ajax({
+                    url: $(this).attr("action"),
+                    method: "post",
+                    data: $(this).serialize(),
+                    success: function(data) {
+                        $("#notes").html(data);
+                        $(this).parent().parent().children(".editform").toggle();
+                        $(this).parent().parent().children(".desc").toggle();
+                    },
+                    error: function (data) {
+                        $(".editerror").html(data.responseText);
+                    }
+                });
+            });
+
+            $(".deletebutton").click(function(e) {
+                e.preventDefault();
+                $.ajax({
+                    url: $(this).attr("action"),
+                    method: "post",
+                    data: $(this).serialize(),
+                    success: function(data) {
+                        $("#notes").html(data);
+                    }
+                });
+            });
+        });
+    </script>
+    <style>
+        .singlenote {
+            background-color: rgb(125, 178, 199);
+            padding: 15px;
+            font-size: 18px;
+            display: inline-block;
+            vertical-align: top;
+            width: 350px;
+            margin: 20px;
+            border-radius: 10px;
+            max-height: 200px;
+            overflow: auto;
+        }
+        .editform {
+            display: none;
+        }
+        .actions form, .actions button {
+            display: inline-block;
+            margin: 3px;
+            margin-left: 30px;
+        }
+        .editform button {
+            display: inline-block;
+            margin-left: 20px;
+        }
+    </style>
+</head>
+<body>
+    {% for message in messages %}
+        {% if "edit" in message.tags %}
+            <span class = "text-danger">{{message}}</span><br/>
+        {% endif %}
+    {% endfor %}
+
+    {% for note in notes %}
+        <div class = "singlenote">
+            <div class = "desc">
+                {{note.note}}
+                <div class = "actions">
+                    <button class = "btn btn-secondary editbutton">Edit</button>
+                    <form action = "/deletenote/{{note.id}}" class = "deletebutton">
+                        {% csrf_token %}
+                        <button class = "btn btn-dark">Delete</button>
+                    </form>
+                </div>
+            </div>
+            <div class = "editform">
+                <span class = "editerror error"></span><br/>
+                <form action = "/editnote/{{note.id}}" method = "post" class = "editconfirm">
+                    {% csrf_token %}
+                    <textarea name = "note" rows = "3" cols = "35">{{note.note}}</textarea><br/>
+                    <input type = "submit" value = "Edit note" class = "btn btn-light">
+                    <button type = "button" class = "btn btn-secondary cancel">Cancel</button>
+                </form>
+            </div>
+        </div>
+    {% endfor %}
+</body>
+</html>
